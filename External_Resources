@@ -1,0 +1,50 @@
+-- CREATE MASTER KEY
+
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = ''
+
+-- the master key is used to encrypt the scoped credential secret
+------------------------------
+-- DATABASE SCOPED CREDENTIAL
+------------------------------
+
+create database scoped CREDENTIAL soumya_creds
+with IDENTITY = 'Managed Identity'
+
+-------------------------
+-- EXTERNAL DATA SOURCE
+-------------------------
+-- For SILVER LATER
+
+create EXTERNAL data source silver_source
+WITH
+(
+    LOCATION = 'https://ssdwhdl.dfs.core.windows.net/silver/',
+    CREDENTIAL = soumya_creds
+)
+-- FOR GOLD LAYER
+
+create EXTERNAL data source gold_source
+WITH
+(
+    LOCATION = 'https://ssdwhdl.dfs.core.windows.net/gold/',
+    CREDENTIAL = soumya_creds
+)
+
+
+--------------------------
+-- EXTERNAL FILE FORMAT
+--------------------------
+
+create EXTERNAL FILE FORMAT parquet_format
+WITH
+(
+    FORMAT_TYPE = PARQUET,
+    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'
+)
+
+
+create EXTERNAL FILE FORMAT delta_format
+WITH
+(
+    FORMAT_TYPE = DELTA
+)
