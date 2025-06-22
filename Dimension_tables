@@ -1,0 +1,114 @@
+-- DimCustomer table creation
+-- this row_number() function is used to create surrogate keys in the dim table
+-- using a subquery to fetch the distinct rows first and then apply the surrogate keys
+-- checking whether the table or schema exists befor creating them
+
+IF NOT EXISTS (SELECT * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id
+where t.name = 'DimCustomer' and s.name = 'gold')
+
+CREATE EXTERNAL table gold.DimCustomer
+WITH
+(
+    location = 'DimCustomer',
+    data_source = gold_source,
+    FILE_FORMAT = parquet_format
+)
+AS
+select *,ROW_NUMBER() OVER (order by C.CustomerID) as DimCustomerKey 
+FROM
+(
+select
+    distinct 
+    CustomerID, 
+    CustomerName,
+    CustomerEmail,
+    Domain
+from silver.silverTable
+) C
+
+SELECT * from gold.DimCustomer;
+
+
+-- DimProduct table creation
+IF NOT EXISTS (SELECT * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id
+where t.name = 'DimProduct' and s.name = 'gold')
+
+CREATE EXTERNAL table gold.DimProduct
+WITH
+(
+    location = 'DimProduct',
+    data_source = gold_source,
+    FILE_FORMAT = parquet_format
+)
+AS
+select *,ROW_NUMBER() OVER (order by P.ProductID) as DimProductKey 
+from
+(
+select
+    distinct 
+    ProductID, 
+    ProductName,
+    ProductCategory
+from silver.silverTable
+) P
+
+SELECT * from gold.DimProduct;
+
+
+-- DimRegion table creation
+IF NOT EXISTS (SELECT * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id
+where t.name = 'DimRegion' and s.name = 'gold')
+
+CREATE EXTERNAL table gold.DimRegion
+WITH
+(
+    location = 'DimRegion',
+    data_source = gold_source,
+    FILE_FORMAT = parquet_format
+)
+AS
+select *,ROW_NUMBER() OVER (order by R.RegionID) as DimRegionKey
+FROM
+(
+select
+    distinct 
+    RegionID, 
+    RegionName,
+    Country
+from silver.silverTable
+) R
+
+SELECT * from gold.DimRegion;
+
+
+select * from silver.SilverTable;
+-- DimOrders table creation
+IF NOT EXISTS (SELECT * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id
+where t.name = 'DimOrders' and s.name = 'gold')
+
+CREATE EXTERNAL table gold.DimOrders
+WITH
+(
+    location = 'DimOrders',
+    data_source = gold_source,
+    FILE_FORMAT = parquet_format
+)
+AS
+select *,ROW_NUMBER() OVER (order by O.OrderID) as DimOrderKey 
+FROM
+(
+select
+    OrderID,
+    OrderDate,
+    CustomerID,CustomerName,
+    CustomerEmail,
+    ProductID,
+    ProductName,
+    ProductCategory,
+    RegionID,
+    RegionName,
+    Country,Domain
+from silver.silverTable
+) O
+
+SELECT * from gold.DimOrders;
