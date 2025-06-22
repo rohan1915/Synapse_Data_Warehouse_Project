@@ -1,0 +1,32 @@
+-- select * from silver.SilverTable;
+-- creatin the fact table in the gold layer
+
+IF NOT EXISTS (SELECT * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id
+where t.name = 'FactOrder' and s.name = 'gold')
+
+CREATE EXTERNAL table gold.FactOrder
+with (
+    LOCATION = 'FactOrder',
+    DATA_SOURCE = gold_source,
+    FILE_FORMAT = parquet_format
+)
+AS
+SELECT
+    o.DimOrderKey,
+    c.DimCustomerKey,
+    p.DimProductKey,
+    r.DimRegionKey,
+    s.Quantity,
+    s.UnitPrice,
+    s.TotalAmount
+FROM silver.SilverTable s
+left join 
+    gold.DimOrders o on s.OrderID = o.OrderID
+left join
+    gold.DimCustomer c on s.CustomerID = c.CustomerID
+left join
+    gold.DimProduct p on s.ProductID = p.ProductID
+left join
+    gold.DimRegion r on s.RegionID =  r.RegionID and s.Country = r.Country  
+
+SELECT * FROM gold.FactOrder;                
