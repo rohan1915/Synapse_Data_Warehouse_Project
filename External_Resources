@@ -48,3 +48,10 @@ WITH
 (
     FORMAT_TYPE = DELTA
 )
+-----------------------
+-- CREATE SCHEMAS
+-----------------------
+
+CREATE schema silver;
+
+create SCHEMA gold;
